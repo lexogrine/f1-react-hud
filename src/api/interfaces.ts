@@ -149,3 +149,89 @@ export type Knife =
 | "knife_ursus"//
 | "knife_widowmaker"//
 | "knife_canis";//
+
+
+export interface PacketHeader {
+  m_packetFormat: number;
+  m_packetVersion: number;
+  m_packetId: number;
+  m_sessionUID: bigint;
+  m_sessionTime: number;
+  m_frameIdentifier: number;
+  m_playerCarIndex: number;
+  m_surfaceType: number[];
+}
+
+export interface LapData {
+    m_lastLapTime: number;
+    m_currentLapTime: number;
+    m_bestLapTime: number;
+    m_sector1Time: number;
+    m_sector2Time: number;
+    m_lapDistance: number;
+    m_totalDistance: number;
+    m_safetyCarDelta: number;
+    m_carPosition: number;
+    m_currentLapNum: number;
+    m_pitStatus: number;
+    m_sector: number;
+    m_currentLapInvalid: number;
+    m_penalties: number;
+    m_gridPosition: number;
+    m_driverStatus: number;
+    m_resultStatus: number;
+}
+
+export interface PacketLapData {
+  m_header: PacketHeader;
+  m_lapData: LapData[];
+}
+export interface MarshalZone {
+    m_zoneStart: number;
+    m_zoneFlag: number;
+}
+export interface WeatherForecastSample {
+    m_sessionType: number;
+    m_timeOffset: number;
+    m_weather: number;
+    m_trackTemperature: number;
+    m_airTemperature: number;
+}
+export interface PacketSessionData {
+    m_header: PacketHeader;
+    m_weather: number;
+    m_trackTemperature: number;
+    m_airTemperature: number;
+    m_totalLaps: number;
+    m_trackLength: number;
+    m_sessionType: number;
+    m_trackId: number;
+    m_era: number;
+    m_formula: number;
+    m_sessionTimeLeft: number;
+    m_sessionDuration: number;
+    m_pitSpeedLimit: number;
+    m_gamePaused: number;
+    m_isSpectating: number;
+    m_spectatorCarIndex: number;
+    m_sliProNativeSupport: number;
+    m_numMarshalZones: number;
+    m_marshalZones: MarshalZone[];
+    m_safetyCarStatus: number;
+    m_networkGame: number;
+    m_numWeatherForecastSamples: number;
+    m_weatherForecastSamples: WeatherForecastSample[];
+}
+export interface ParticipantData {
+    m_aiControlled: number;
+    m_driverId: number;
+    m_name: string;
+    m_nationality: number;
+    m_raceNumber: number;
+    m_teamId: number;
+}
+export interface PacketParticipantsData {
+    m_header: PacketHeader;
+    m_numCars: number;
+    m_participants: ParticipantData[];
+}

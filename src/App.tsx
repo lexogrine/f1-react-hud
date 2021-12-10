@@ -3,41 +3,43 @@ import Layout from './HUD/Layout/Layout';
 import api, { port, isDev } from './api/api';
 import { loadAvatarURL } from './api/avatars';
 import ActionManager, { ConfigManager } from './api/actionManager';
-
-import { CSGO, PlayerExtension, GSISocket } from "csgogsi-socket";
-import { Match } from './api/interfaces';
+import Socket from 'socket.io-client';
+import { Match, PacketLapData, PacketParticipantsData, PacketSessionData } from './api/interfaces';
 import { initiateConnection } from './HUD/Camera/mediaStream';
-
-export const { GSI, socket } = GSISocket(isDev ? `localhost:${port}` : '/', "update");
-
 export const actions = new ActionManager();
 export const configs = new ConfigManager();
+
+//export const { GSI, socket } = GSISocket(isDev ? `localhost:${port}` : '/', "update");
+export const socket = Socket(`localhost:${port}`);
 
 export const hudIdentity = {
 	name: '',
 	isDev: false
 };
 
-interface DataLoader {
-	match: Promise<void> | null
+interface IState {
+	match: Match | null,
+	lap: PacketLapData | null,
+	session: PacketSessionData | null,
+	participants: PacketParticipantsData | null,
+	steamids: string[],
+	checked: boolean
 }
 
-const dataLoader: DataLoader = {
-	match: null
-}
-
-class App extends React.Component<any, { match: Match | null, game: CSGO | null, steamids: string[], checked: boolean }> {
+class App extends React.Component<any, IState> {
 	constructor(props: any) {
 		super(props);
 		this.state = {
-			game: null,
+			lap: null,
+			session: null,
+			participants: null,
 			steamids: [],
 			match: null,
 			checked: false
 		}
 	}
 
-	verifyPlayers = async (game: CSGO) => {
+	/*verifyPlayers = async (game: CSGO) => {
 		const steamids = game.players.map(player => player.steamid);
 		steamids.forEach(steamid => {
 			loadAvatarURL(steamid);
@@ -75,11 +77,11 @@ class App extends React.Component<any, { match: Match | null, game: CSGO | null,
 		
 		GSI.players = gsiLoaded;
 		this.setState({ steamids });
-	}
+	}*/
 
 
 	componentDidMount() {
-		this.loadMatch();
+		//this.loadMatch();
 		const href = window.location.href;
 		socket.emit("started");
 		let isDev = false;
@@ -95,7 +97,7 @@ class App extends React.Component<any, { match: Match | null, game: CSGO | null,
 		}
 
 		socket.on("readyToRegister", () => {
-			socket.emit("register", name, isDev);
+			socket.emit("register", name, isDev, 'f1');
 			initiateConnection();
 		});
 		socket.on(`hud_config`, (data: any) => {
@@ -112,23 +114,22 @@ class App extends React.Component<any, { match: Match | null, game: CSGO | null,
 			window.top.location.reload();
 		});
 
-		socket.on("update_mirv", (data: any) => {
-			GSI.digestMIRV(data);
-		})
-		GSI.on('data', game => {
-			if (!this.state.game || this.state.steamids.length) this.verifyPlayers(game);
-			this.setState({ game }, () => {
-				if (!this.state.checked) this.loadMatch();
-			});
+		const verifyMatch = () => {
+			//if (!this.state.checked) this.loadMatch();
+		}
+		socket.on("update", ({ type, data }: { type: 'lap' | 'session' | 'participants', data: any }) => {
+			if (type === "lap") this.setState({ lap: data }, verifyMatch);
+			else if (type === "session") this.setState({ session: data }, verifyMatch);
+			else if (type === "participants") this.setState({ participants: data }, verifyMatch);
 		});
-		socket.on('match', () => {
+		/*socket.on('match', () => {
 
 			this.loadMatch(true);
-		});
+		});*/
 
 	}
 
-	loadMatch = async (force = false) => {
+	/*loadMatch = async (force = false) => {
 		if (!dataLoader.match || force) {
 			dataLoader.match = new Promise((resolve) => {
 				api.match.getCurrent().then(match => {
@@ -173,11 +174,16 @@ class App extends React.Component<any, { match: Match | null, game: CSGO | null,
 				});
 			});
 		}
-	}
+	}*/
 	render() {
-		if (!this.state.game) return null;
+		if (!this.state.session) return null;
 		return (
-			<Layout game={this.state.game} match={this.state.match} />
+			<Layout
+				match={null}
+				session={this.state.session}
+				lap={(this.state.lap && this.state.lap.m_lapData) || []}
+				participants={(this.state.participants && this.state.participants.m_participants) || []}
+			/>
 		);
 	}
 
