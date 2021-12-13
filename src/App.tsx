@@ -4,8 +4,13 @@ import api, { port, isDev } from './api/api';
 import { loadAvatarURL } from './api/avatars';
 import ActionManager, { ConfigManager } from './api/actionManager';
 import Socket from 'socket.io-client';
-import { Match, PacketLapData, PacketParticipantsData, PacketSessionData } from './api/interfaces';
+import { Match } from './api/interfaces';
 import { initiateConnection } from './HUD/Camera/mediaStream';
+import { lap, participants } from './mockData';
+import { PacketCarStatusData, PacketCarTelemetryData, PacketLapData, PacketParticipantsData, PacketSessionData, PacketSessionHistoryData } from 'f1-2021-udp/build/src/parsers/types';
+import { LapData } from 'f1-2021-udp/build/src/parsers/2_LapData/types';
+import { CarStatusData } from 'f1-2021-udp/build/src/parsers/7_CarStatus/types';
+import { CarTelemetryData } from 'f1-2021-udp/build/src/parsers/6_CarTelemetry/types';
 export const actions = new ActionManager();
 export const configs = new ConfigManager();
 
@@ -17,11 +22,32 @@ export const hudIdentity = {
 	isDev: false
 };
 
+export interface Player {
+    m_aiControlled: number;
+    m_driverId: number;
+    m_networkId: number;
+    m_teamId: number;
+    m_myTeam: number;
+    m_raceNumber: number;
+    m_nationality: number;
+    m_name: string;
+    m_yourTelemetry: number;
+
+	
+	playerLap: LapData | null,
+	playerCarStatus: CarStatusData | null,
+	playerCarTelemetry: CarTelemetryData | null,
+	playerSessionHistory: PacketSessionHistoryData | null,
+}
+
 interface IState {
 	match: Match | null,
 	lap: PacketLapData | null,
 	session: PacketSessionData | null,
+	carStatus: PacketCarStatusData | null,
+	carTelemetry: PacketCarTelemetryData | null,
 	participants: PacketParticipantsData | null,
+	sessionHistory: PacketSessionHistoryData[],
 	steamids: string[],
 	checked: boolean
 }
@@ -32,6 +58,9 @@ class App extends React.Component<any, IState> {
 		this.state = {
 			lap: null,
 			session: null,
+			carStatus: null,
+			carTelemetry: null,
+			sessionHistory: [],
 			participants: null,
 			steamids: [],
 			match: null,
@@ -117,9 +146,21 @@ class App extends React.Component<any, IState> {
 		const verifyMatch = () => {
 			//if (!this.state.checked) this.loadMatch();
 		}
-		socket.on("update", ({ type, data }: { type: 'lap' | 'session' | 'participants', data: any }) => {
-			if (type === "lap") this.setState({ lap: data }, verifyMatch);
+		socket.on("update", ({ type, data }: { type: 'participants'| 'session' | 'lapData' | 'carStatus' | 'carTelemetry' | 'sessionHistory', data: any }) => {
+			if (type === "lapData") this.setState({ lap: data }, verifyMatch);
 			else if (type === "session") this.setState({ session: data }, verifyMatch);
+			else if (type === "carStatus") this.setState({ carStatus: data }, verifyMatch);
+			else if (type === "carTelemetry") this.setState({ carTelemetry: data }, verifyMatch);
+			else if (type === "sessionHistory") {
+				const sessionHistoryIndex = this.state.sessionHistory.findIndex(sessionHistory => sessionHistory.m_carIdx === (data as PacketSessionHistoryData).m_carIdx);
+				if(sessionHistoryIndex === -1){
+					this.setState({ sessionHistory: [...this.state.sessionHistory, data] });
+					return;
+				}
+				const newSessionHistory = [...this.state.sessionHistory];
+				newSessionHistory[sessionHistoryIndex] = data;
+				this.setState({ sessionHistory: newSessionHistory }, verifyMatch);
+			}
 			else if (type === "participants") this.setState({ participants: data }, verifyMatch);
 		});
 		/*socket.on('match', () => {
@@ -176,13 +217,32 @@ class App extends React.Component<any, IState> {
 		}
 	}*/
 	render() {
-		if (!this.state.session) return null;
+		//if (!this.state.session) return null;
+		const { lap, session, carStatus, carTelemetry, participants, sessionHistory} = this.state;
+
+		if(!participants || !participants.m_participants) return null;
+
+		const players: Player[] = participants.m_participants.map((participant, index) => {
+			const playerLap = (lap && lap.m_lapData[index]) || null;
+			const playerCarStatus = (carStatus && carStatus.m_carStatusData[index]) || null;
+			const playerCarTelemetry = (carTelemetry && carTelemetry.m_carTelemetryData[index]) || null;
+			const playerSessionHistory = sessionHistory[index] || null;
+
+			return ({
+				...participant,
+				playerLap,
+				playerCarStatus,
+				playerCarTelemetry,
+				playerSessionHistory
+			})
+		})
+
 		return (
 			<Layout
 				match={null}
-				session={this.state.session}
-				lap={(this.state.lap && this.state.lap.m_lapData) || []}
-				participants={(this.state.participants && this.state.participants.m_participants) || []}
+				players={players}
+				session={session}
+				amountOfParticipants={participants.m_numActiveCars}
 			/>
 		);
 	}

@@ -1,0 +1,80 @@
+.current-driver-lap {
+    flex-direction: column;
+    display: flex;
+    width: 341px;
+    position: fixed;
+    top: 40px;
+    right: 62px;
+    border-radius: 3px;
+    .driver-lap-pos {
+        width: 100%;
+        height: 80px;
+        flex-direction: column;
+        display: flex;
+        background-color: rgba(0,0,0,0.8);
+        color: white;
+        display: flex;
+        font-size: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        text-shadow: 0 0 7px white;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        .lap-separator {
+            opacity: 0.25;
+            background-color: white;
+            width: 161px;
+            height: 1px;
+            margin: 4px 0;
+        }
+    }
+
+    .driver-lap-stats {
+        height: 53px;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        background-color: rgba(22, 2, 2, 0.8);
+        
+        .driver-stat-container {
+            display: flex;
+            flex-direction: column;
+            height:100%;
+            justify-content: center;
+            color: white;
+            margin: 0 10px;
+            &:nth-child(2){
+                text-align: right;
+            }
+            .label {
+                font-size: 14px;
+                text-transform: uppercase;
+                letter-spacing: 0.15em;
+                font-weight: 300;
+            }
+            .value {
+                font-size: 18px;
+                font-weight: 800;
+
+            }
+        }
+    }
+    .sectors {
+        height: 20px;
+        width: 100%;
+        display: flex;
+
+        .sector {
+            flex: 1;
+            background: linear-gradient(90deg, #160202 0%, #390707 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            &.active {
+                background: linear-gradient(90deg, #941E16 0%, #C42C1F 100%);
+            }
+        }
+    }
+}

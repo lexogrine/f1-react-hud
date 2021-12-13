@@ -1,0 +1,23 @@
+.engine-info {
+    width: 341px;
+    border-radius: 3px;
+
+    background-color: rgba(22,2,2,0.8);
+
+    color:rgba(255,255,255,0.5);
+    right: 61px;
+    bottom: 254px;
+    position: fixed;
+    .entry {
+        width: 100%;
+        height: 36px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 10px;
+
+        .value {
+            width: 86px;
+        }
+    }
+}

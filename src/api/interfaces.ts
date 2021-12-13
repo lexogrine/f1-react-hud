@@ -163,11 +163,18 @@ export interface PacketHeader {
 }
 
 export interface LapData {
-    m_lastLapTime: number;
-    m_currentLapTime: number;
-    m_bestLapTime: number;
-    m_sector1Time: number;
-    m_sector2Time: number;
+    m_lastLapTimeInMS: number;
+    m_currentLapTimeInMS: number;
+    m_sector1TimeInMS: number;
+    m_sector2TimeInMS: number;
+    m_warnings: number;
+    m_numUnservedDriveThroughPens: number;
+    m_numUnservedStopGoPens: number;
+    m_pitLaneTimerActive: number;
+    m_pitStopShouldServePen: number;
+    m_pitLaneTimeInLaneInMS: number;
+    m_pitStopTimerInMS: number;
+    m_numPitStops: number;
     m_lapDistance: number;
     m_totalDistance: number;
     m_safetyCarDelta: number;
@@ -226,6 +233,9 @@ export interface ParticipantData {
     m_aiControlled: number;
     m_driverId: number;
     m_name: string;
+    m_networkId: number;
+    m_myTeam: number;
+    m_yourTelemetry: number;
     m_nationality: number;
     m_raceNumber: number;
     m_teamId: number;
